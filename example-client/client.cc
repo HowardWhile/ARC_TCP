@@ -1,37 +1,21 @@
 #include "TCP_Client.h"
 #include <iostream>
-#include <vector>
-#include <thread>
-#include <mutex>
-
-std::vector<int> buffer;
-std::mutex bufferLock;
-void bg_fun()
-{
-    int i;
-    // while (true)
-    while (i < 10)
-    {
-        std::lock_guard<std::mutex> lock(bufferLock);
-        {
-            buffer.push_back(i);
-        }
-        std::cout << "bg_fun" << i << "\r\n";
-        i++;
-    }
-}
-
+#include <stdio.h>
+#include <unistd.h>
 int main(void)
 {
-    TCP_Client c;
+    using namespace ARC;
+    printf("Press Enter key to continue...");  
+    fgetc(stdin);  
 
-    std::thread t1(bg_fun);
-    std::thread t2(bg_fun);
-    std::thread t3(bg_fun);
-    t1.join();
-    t2.join();
-    t3.join();
+    // TCP_Client client = TCP_Client("192.168.2.1", 2000);
+    TCP_Client client = TCP_Client("127.0.0.1", 3000);
+    if(client.Connect())
+    {
 
-    std::cout << "complete\r\n";
+    }
+    
+    printf("Press Enter key to continue...");  
+    fgetc(stdin);  
     return 0;
 }
