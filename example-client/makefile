@@ -1,22 +1,38 @@
+# -----------------------------------------------------------------
+# https://spin.atomicobject.com/2016/08/26/makefile-c-projects/
+# -----------------------------------------------------------------
 
-TARGET ?= client
+TARGET_EXEC ?= client
+
+BUILD_DIR ?= ./build
 SRC_DIRS ?= ./
 
-SRCS := $(shell find $(SRC_DIRS) -name *.cpp -or -name *.cc -or -name *.c -or -name *.s)
-OBJS := $(addsuffix .o,$(basename $(SRCS)))
+SRCS := $(shell find $(SRC_DIRS) -name *.cpp -or -name *.cc)
+OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
-CC := g++
 
 INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-CPPFLAGS ?= $(INC_FLAGS) -MMD -MP
+CPPFLAGS ?= $(INC_FLAGS) -MMD -MP 
+LDFLAGS ?= -lpthread
 
-$(TARGET): $(OBJS)
-	$(CC) $(LDFLAGS) $(OBJS) -o $@ $(LOADLIBES) $(LDLIBS)
+$(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
+	$(CXX) $(OBJS) -o $@ $(LDFLAGS)
+
+$(BUILD_DIR)/%.cpp.o: %.cpp
+	$(MKDIR_P) $(dir $@)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/%.cc.o: %.cc
+	$(MKDIR_P) $(dir $@)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 .PHONY: clean
+
 clean:
-	$(RM) $(TARGET) $(OBJS) $(DEPS)
+	$(RM) -r $(BUILD_DIR)
 
 -include $(DEPS)
+
+MKDIR_P ?= mkdir -p
