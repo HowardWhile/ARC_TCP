@@ -20,11 +20,44 @@ namespace ARC
         void (*Event_Connected)(TCP_Client* context);
         void (*Event_Disconnected)(TCP_Client* context);
         void (*Event_DataReceive)(TCP_Client* context);
+
+        // ----------------------------------------
+        // Thread
+        // ----------------------------------------
+        // https://stackoverflow.com/questions/1151582/pthread-function-from-a-class
+        pthread_t bg_rx;
+        static void* bg_rx_sLink(void* iContext)
+        {
+            return ((TCP_Client*)iContext)->bg_rx_DoWork();
+        }
+        void* bg_rx_DoWork(void)
+        {
+            int i = 0;
+            while (true)
+            {
+                printf("HelloWorld %d \r\n",i++);
+            }            
+            return 0;
+        }
+        void bg_rx_start()
+        {
+            pthread_create(&bg_rx, NULL, &TCP_Client::bg_rx_sLink, this);
+        }
+        void bg_rx_stop()
+        {
+            pthread_cancel(bg_rx);
+        }
+        // ----------------------------------------
+
+
+
     private:
         void init();
         int socket_id;
         std::string ip_address;
         int port;
+
+
         
     };
 
