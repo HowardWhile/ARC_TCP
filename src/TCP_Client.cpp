@@ -154,6 +154,8 @@ void ARC::TCP_Client::bg_rx_work(void)
     std::vector<char> rx_buffer;
     rx_buffer.resize(2048);
 
+    int byte2read = 0;
+
     // main loop
     while (true)
     {
@@ -166,19 +168,11 @@ void ARC::TCP_Client::bg_rx_work(void)
         if(byte2read < 0)
         {
             DBG_PRINT("[Socket ID:(%d)] recv function error: (%d), close rx thread.", this->socket_id, byte2read);
-            if (this->Event_Disconnected != nullptr)
-            {
-                this->Event_Disconnected(this, byte2read);
-            }
             break;
         }
         else if (byte2read == 0)
         {
             DBG_PRINT("[Socket ID:(%d)] Detected TcpServer offline, close rx thread.", this->socket_id);
-            if (this->Event_Disconnected != nullptr)
-            {
-                this->Event_Disconnected(this, byte2read);
-            }
             break;
         }
         else
@@ -191,7 +185,12 @@ void ARC::TCP_Client::bg_rx_work(void)
                 this->Event_DataReceive(this, package);
             }
         }
-    }   
+    }
+
+    if (this->Event_Disconnected != nullptr)
+    {
+        this->Event_Disconnected(this, byte2read);
+    }
 }
 
 void ARC::TCP_Client::init()
