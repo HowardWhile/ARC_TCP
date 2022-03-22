@@ -68,7 +68,7 @@ bool ARC::TCP_Client::Connect(int timeout)
 
     DBG_PRINT("socket(%d) start connecting to %s:%d", this->socket_id, this->ip_address.c_str(), this->port);
     // ---------------------------------------------------------------------
-    // 簡易連線的方法
+    // 簡易連線的方法 (捨棄)
     // ---------------------------------------------------------------------
 	// if (connect(this->socket_id, (struct sockaddr *)&connect_target, sizeof(connect_target)) < 0)
 	// {
@@ -77,7 +77,8 @@ bool ARC::TCP_Client::Connect(int timeout)
 	// }
 	// return true;
     // ---------------------------------------------------------------------
-    // 連線同時檢查timeout的方法
+    // ---------------------------------------------------------------------
+    // 連線同時檢查timeout的方法 (採用)
     // http://stackoverflow.com/questions/2597608/c-socket-connection-timeout
     // ---------------------------------------------------------------------	
 	fcntl(this->socket_id, F_SETFL, O_NONBLOCK);
@@ -121,8 +122,11 @@ bool ARC::TCP_Client::Connect(int timeout)
             // 到這邊就成功連線了
 			// 把rx執行序打開來
 			/* --------------------------------------- */
-            //this->bg_rx = std::thread(&TCP_Client::bg_rx_DoWork, this);
-
+            this->bg_rx_Start();
+            if(this->Event_Connected != nullptr)
+            {
+                this->Event_Connected(this);
+            }
             return true;
         }
         else
@@ -136,6 +140,58 @@ bool ARC::TCP_Client::Connect(int timeout)
         DBG_PRINT("socket(%d) connect to server %s:%d timeout", this->socket_id, this->ip_address.c_str(), this->port);      
         return false;
     }
+}
+
+void ARC::TCP_Client::Disconnect() 
+{
+    close(this->socket_id);
+    this->bg_rx_Close();    
+}
+
+void ARC::TCP_Client::bg_rx_work(void) 
+{
+    // char rx_buffer[2048] 用於緩衝
+    std::vector<char> rx_buffer;
+    rx_buffer.resize(2048);
+
+    // main loop
+    while (true)
+    {
+        char* buffer_ptr = &rx_buffer[0];
+        int buffer_size = rx_buffer.size();
+
+        int byte2read = recv(this->socket_id, buffer_ptr, buffer_size, 0);
+        DBG_PRINT("byte2read = %d", byte2read);
+
+        if(byte2read < 0)
+        {
+            DBG_PRINT("[Socket ID:(%d)] recv function error: (%d), close rx thread.", this->socket_id, byte2read);
+            if (this->Event_Disconnected != nullptr)
+            {
+                this->Event_Disconnected(this, byte2read);
+            }
+            break;
+        }
+        else if (byte2read == 0)
+        {
+            DBG_PRINT("[Socket ID:(%d)] Detected TcpServer offline, close rx thread.", this->socket_id);
+            if (this->Event_Disconnected != nullptr)
+            {
+                this->Event_Disconnected(this, byte2read);
+            }
+            break;
+        }
+        else
+        {
+            pkg package;
+            package.assign(rx_buffer.begin(), rx_buffer.begin() + byte2read);
+
+            if (this->Event_DataReceive != nullptr)
+            {
+                this->Event_DataReceive(this, package);
+            }
+        }
+    }   
 }
 
 void ARC::TCP_Client::init()

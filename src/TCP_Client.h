@@ -13,42 +13,29 @@ namespace ARC
         ~TCP_Client(); 
 
         bool Connect(int timeout = -1);
+        void Disconnect();
 
         // ----------------------------------------
         // Event
         // ----------------------------------------
-        void (*Event_Connected)(TCP_Client* context);
-        void (*Event_Disconnected)(TCP_Client* context);
-        void (*Event_DataReceive)(TCP_Client* context);
+        void (*Event_Connected)(TCP_Client* Context);
+        void (*Event_Disconnected)(TCP_Client* Context, int ErrCode);
+        void (*Event_DataReceive)(TCP_Client* Context, pkg Package);
 
         // ----------------------------------------
         // Thread
         // ----------------------------------------
-        BACKGROUND_WORKER(TCP_Client, thread1)
+        BACKGROUND_WORKER(TCP_Client, bg_rx)
         {
-            int i = 0;
-            while (true)
-            {
-                printf("[%d] thread1 %d\r\n", this->port, i++);
-            }
-        }
-
-        BACKGROUND_WORKER(TCP_Client, thread2)
-        {
-            int i = 0;
-            while (true)
-            {
-                printf("[%d] thread2 %d\r\n", this->port, i++);
-            }
+            this->bg_rx_work();
         }
 
     private:
         void init();
+        void bg_rx_work(void);
         int socket_id;
         std::string ip_address;
         int port;
-
-
         
     };
 
