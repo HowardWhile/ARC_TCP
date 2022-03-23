@@ -35,11 +35,10 @@ namespace ARC
         }
 
     private:
-        void init();
         void bgRxWork(void);
-        int socket_id;
-        std::string ip_address;
-        int port;
+        int _socket_id;
+        std::string _ip_address;
+        int _port;
     };
 
 }

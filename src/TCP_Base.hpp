@@ -1,10 +1,12 @@
 #ifndef TCP_BASE_H
 #define TCP_BASE_H
 
+#pragma once
+
 /**
     @file TCP_Base
 
-    @brief ARC_TCP的基礎型態
+    @brief ARC_TCP的基礎定義
 
     @author Howard Cheng
 
@@ -12,8 +14,6 @@
 
     @date 2022-03-22
 */
-
-#pragma once
 
 #include <vector>
 #include <string>
@@ -23,6 +23,13 @@ namespace ARC
 {
     typedef std::vector<char> pkg;
     typedef std::vector<pkg> pkgs;
+
+    typedef struct{
+        std::string endpoint;
+        std::string ip;
+        int port;
+        int socket_id;
+    }accept_info;
 }
 
 // ------------------------------------------------

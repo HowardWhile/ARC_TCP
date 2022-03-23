@@ -1,4 +1,4 @@
-#include "TCP_Server.h"
+#include "TCPServer.h"
 #include <iostream>
 #include <stdio.h>
 #include <unistd.h>
@@ -7,10 +7,11 @@
 
 using namespace ARC;
 
+TCPServer ss = TCPServer(2000);
 
 int main(void)
 {    
-    printf("Hello World\r\n");
-    
+    ss.open();
+    PAUSE;
     return 0;
 }
