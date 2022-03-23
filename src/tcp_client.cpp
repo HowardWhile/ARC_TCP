@@ -178,6 +178,7 @@ namespace ARC
         {
             return this->write(&i_package[0], i_package.size());
         }
+        return 0;
     }
 
     int TCPClient::write(std::string i_message)
@@ -187,6 +188,7 @@ namespace ARC
             ARC::pkg pkg(i_message.c_str(), i_message.c_str() + i_message.size());
             return this->write(&pkg[0], pkg.size());
         }
+        return 0;
     }
 
     int TCPClient::write(const char i_byte[], int i_length)
@@ -200,6 +202,7 @@ namespace ARC
 
             return ret;
         }
+        return 0;
     }
 
     void ARC::TCPClient::bgRxWork(void)

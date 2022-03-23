@@ -3,6 +3,7 @@
 #include <arpa/inet.h> // inet_ntoa
 #include <string.h>    // bzero
 #include <unistd.h>    // close()
+#include <signal.h>    // pthread_kill()
 
 #define MAX_ACCEPT_NUM 2 // 最大的連接數量
 
@@ -97,6 +98,46 @@ namespace ARC
     {
     }
 
+    int TCPServer::write(ARC::pkg i_package, std::string i_endpoint)
+    {
+        return this->write(&i_package[0], i_package.size(), i_endpoint);
+    }
+
+    int TCPServer::write(std::string i_message, std::string i_endpoint)
+    {
+        ARC::pkg pkg(i_message.c_str(), i_message.c_str() + i_message.size());
+        return this->write(&pkg[0], pkg.size(), i_endpoint);
+    }
+
+    int TCPServer::write(const char i_byte[], int i_length, std::string i_endpoint)
+    {
+        if (i_length > 0)
+        {
+            if (i_endpoint == "") //廣播
+            {
+                // lock
+                std::lock_guard<std::mutex> lock(*this->mutex_accept_client);
+
+                // for loop table
+                for (auto const &client : this->table_accept_client)
+                {
+                    client.second->write(i_byte, i_length);
+                }
+            }
+            else // 指定目標
+            {
+                // lock
+                std::lock_guard<std::mutex> lock(*this->mutex_accept_client);
+                accept_table::iterator it = this->table_accept_client.find(i_endpoint);
+                if (it != this->table_accept_client.end())
+                {
+                    it->second->write(i_byte, i_length);
+                }
+            }
+        }
+        return 0;
+    }
+
     void TCPServer::bgListenWork(void)
     {
         DBG_PRINT("bgListenWork thread start! socket ID:(%d) thread ID (0x%X)", this->_socket_id, (unsigned)this->bgListen_id);
@@ -156,7 +197,8 @@ namespace ARC
 
     void TCPServer::AcceptClient::bgRxWork(void)
     {
-        DBG_PRINT("bg_rx thread start! socket ID:(%d), thread ID (0x%X).\r\n", this->_accept_info.socket_id, (unsigned)this->bgRx_id);
+        DBG_PRINT("bg_rx thread start! socket ID:(%d), thread ID (0x%X)", this->_accept_info.socket_id, (unsigned)this->bgRx_id);
+
         // char rx_buffer[2048] 用於緩衝
         std::vector<char> rx_buffer;
         rx_buffer.resize(ARC_TCP_RX_BUFFER_SIZE); //
@@ -182,21 +224,43 @@ namespace ARC
                 DBG_PRINT("[Socket ID:(%d)] Detected TcpServer offline, close rx thread.", this->_accept_info.socket_id);
                 break;
             }
-            else
+            else // 正常接收到訊息
             {
                 pkg package;
                 package.assign(rx_buffer.begin(), rx_buffer.begin() + byte2read);
-
-                //if (this->Event_DataReceive != nullptr)
-                //{
-                //    this->Event_DataReceive(this, package);
-                //}
+                if (this->_parent->Event_DataReceive != nullptr)
+                {
+                    this->_parent->Event_DataReceive(this->_parent, &this->_accept_info, package);
+                }
             }
         }
 
-        //if (this->Event_Disconnected != nullptr)
-        //{
-        //    this->Event_Disconnected(this, byte2read);
-        //}
+        if (this->_parent->Event_Disconnected != nullptr)
+        {
+            this->_parent->Event_Disconnected(this->_parent, &this->_accept_info, byte2read);
+        }
+    }
+
+    int TCPServer::AcceptClient::write(const char i_byte[], int i_length)
+    {
+        if (this->isConnect())
+        {
+            send(this->_accept_info.socket_id, i_byte, i_length, 0);
+        }
+        return 0;
+    }
+
+    bool TCPServer::AcceptClient::isConnect()
+    {
+        if (this->_accept_info.socket_id < 0)
+        {
+            return false;
+        }
+        else if (pthread_kill(this->bgRx_id, 0) == ESRCH)
+        {
+            // bg_rx thread did not exists or already quit.
+            return false;
+        }
+        return true;
     }
 }

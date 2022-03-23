@@ -26,24 +26,28 @@ namespace ARC
         TCPServer(int i_port);
         ~TCPServer();
         // ----------------------------------------
-        int start();                   // 啟動server
-        void shutDown();               // 關閉server
-        int write(ARC::pkg i_package); // 廣播寫入
-        int write(std::string i_message);
+        int start();     // 啟動server
+        void shutDown(); // 關閉server
+        // ----------------------------------------
+        // Write 不指定endpoint就用廣播來傳送訊息
+        // ----------------------------------------
+        int write(ARC::pkg i_package, std::string i_endpoint = "");
+        int write(std::string i_message, std::string i_endpoint = "");
         int write(const char i_byte[], int i_length, std::string i_endpoint = "");
         // ----------------------------------------
         // Event
         // ----------------------------------------
         void (*Event_Accepted)(TCPServer *context, AcceptInfo *i_client_info);
         void (*Event_Disconnected)(TCPServer *context, AcceptInfo *i_client_info, int i_error_code);
-        void (*Event_DataReceive)(TCPServer *context, AcceptInfo *i_client_info, pkg package);
+        void (*Event_DataReceive)(TCPServer *context, AcceptInfo *i_client_info, pkg i_package);
         // ----------------------------------------
         class AcceptClient // 連入訊息的執行個體
         {
-        private:
         public:
             AcceptClient(AcceptInfo i_accept_info, TCPServer *i_parent);
             ~AcceptClient();
+            int write(const char i_byte[], int i_length);
+            bool isConnect();
 
         private:
             AcceptInfo _accept_info;
@@ -63,7 +67,8 @@ namespace ARC
         int _port;
         // ----------------------------------------
         // 連入的table與操作時會用到的執行序安全變數
-        std::map<std::string, AcceptClient *> table_accept_client;
+        typedef std::map<std::string, AcceptClient *> accept_table; //[key, value] = [終端點, 連入Cline的執行個體]
+        accept_table table_accept_client;
         std::mutex *mutex_accept_client;
         // ----------------------------------------
         // Thread used to handle clinet connect
