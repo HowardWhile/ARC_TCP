@@ -29,7 +29,7 @@ namespace ARC
         std::string ip;
         int port;
         int socket_id;
-    }accept_info;
+    }AcceptInfo;
 }
 
 // ------------------------------------------------

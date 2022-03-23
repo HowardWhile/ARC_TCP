@@ -1,7 +1,8 @@
 #include "tcp_server.h"
 #include <sys/socket.h>
-#include <arpa/inet.h> /*inet_ntoa*/
+#include <arpa/inet.h> // inet_ntoa
 #include <string.h>    // bzero
+#include <unistd.h>    // close()
 
 #define MAX_ACCEPT_NUM 2 // 最大的連接數量
 
@@ -18,10 +19,13 @@ namespace ARC
     {
         this->_socket_id = -1;
         this->_port = i_port;
+
+        this->mutex_accept_client = new std::mutex();
     }
 
     TCPServer::~TCPServer()
     {
+        delete this->mutex_accept_client;
     }
 
     int TCPServer::open()
@@ -109,7 +113,7 @@ namespace ARC
                 // 有client連入
                 // -----------------------------------------
                 // 把accept_msg轉換成比較好處理的資料型態
-                accept_info info;
+                AcceptInfo info;
                 info.ip = std::string(inet_ntoa(accept_msg.sin_addr));
                 info.port = htons(accept_msg.sin_port);
                 info.socket_id = accept_socket_id;
@@ -118,6 +122,11 @@ namespace ARC
                 DBG_PRINT("Detected one accept request!");
                 DBG_PRINT("++ accept from [%s]", info.endpoint.c_str());
                 // -----------------------------------------
+                {
+                    std::lock_guard<std::mutex> lock(*this->mutex_accept_client); // lock table_accept_client
+                    this->table_accept_client.insert({info.endpoint, AcceptClient(info, this)});
+                }
+
                 // try
                 // {
                 //     char endpoint_str[32];
@@ -143,12 +152,16 @@ namespace ARC
         DBG_PRINT("bgListenWork thread exit! socket ID:(%d)", this->_socket_id);
     }
 
-    AcceptClient::AcceptClient()
+    AcceptClient::AcceptClient(AcceptInfo i_accept_info, void* i_context)
     {
+        this->accept_info = i_accept_info;        
+        this->bgRxStart();
     }
 
     AcceptClient::~AcceptClient()
     {
+        close(this->accept_info.socket_id);
+        this->bgRxClose();
     }
 
     void AcceptClient::bgRxWork(void)

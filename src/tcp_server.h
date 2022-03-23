@@ -16,8 +16,29 @@
 */
 
 #include "tcp_base.hpp"
+#include <map>
+#include <mutex>
 namespace ARC
 {
+    class AcceptClient // 每個連入訊息
+    {
+    private:
+    public:
+        AcceptClient(AcceptInfo i_accept_info, void* i_context);
+        ~AcceptClient();
+
+    private:
+        AcceptInfo accept_info;
+        // ----------------------------------------
+        // Thread for processing incoming messages.
+        // ----------------------------------------
+        BACKGROUND_WORKER(AcceptClient, bgRx)
+        {
+            this->bgRxWork();
+        }
+        void bgRxWork(void);
+    };
+
     class TCPServer
     {
     public:
@@ -27,9 +48,16 @@ namespace ARC
         int open();   // 啟動server
         void close(); // 關閉server
 
+        // ----------------------------------------
+        // 連入的table與操作時會用到的執行序安全變數
+        std::map<std::string, AcceptClient> table_accept_client;
+        std::mutex* mutex_accept_client;
+        // ----------------------------------------
+
     private:
         int _socket_id;
-        int _port;
+        int _port;        
+
         // ----------------------------------------
         // Thread used to handle clinet connect
         // ----------------------------------------
@@ -40,24 +68,7 @@ namespace ARC
         void bgListenWork(void);
         // ----------------------------------------
     };
-
-    class AcceptClient // 每個連入訊息
-    {
-    private:
-    public:
-        AcceptClient();
-        ~AcceptClient();
-
-    private:
-        // ----------------------------------------
-        // Thread for processing incoming messages.
-        // ----------------------------------------
-        BACKGROUND_WORKER(AcceptClient, bgRx)
-        {
-            this->bgRxWork();
-        }
-        void bgRxWork(void);
-    };
+    
 }
 
 #endif
