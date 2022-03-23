@@ -78,21 +78,21 @@ static uint64_t clock_ms()
 // 名稱: console
 // 功能: 等同於printf
 /* ----------------------------- */
-#define console(...)                                       \
-    {                                                      \
-        PRINT_FUNCTION("[%lld ms] ", CLOCK_MS_FUNCTION()); \
-        PRINT_FUNCTION(__VA_ARGS__);                       \
-        PRINT_FUNCTION("\r\n");                            \
+#define console(...)                                      \
+    {                                                     \
+        PRINT_FUNCTION("[%ld ms] ", CLOCK_MS_FUNCTION()); \
+        PRINT_FUNCTION(__VA_ARGS__);                      \
+        PRINT_FUNCTION("\r\n");                           \
     }
 /* ----------------------------- */
 // 名稱: console_tag
 // 功能: 多加入tag欄位
 /* ----------------------------- */
-#define console_tag(tag_name, ...)                                       \
-    {                                                                    \
-        PRINT_FUNCTION("[%lld ms][%s] ", CLOCK_MS_FUNCTION(), tag_name); \
-        PRINT_FUNCTION(__VA_ARGS__);                                     \
-        PRINT_FUNCTION("\r\n");                                          \
+#define console_tag(tag_name, ...)                                      \
+    {                                                                   \
+        PRINT_FUNCTION("[%ld ms][%s] ", CLOCK_MS_FUNCTION(), tag_name); \
+        PRINT_FUNCTION(__VA_ARGS__);                                    \
+        PRINT_FUNCTION("\r\n");                                         \
     }
 /* ----------------------------- */
 // 名稱: console_throttle

@@ -33,16 +33,16 @@ namespace ARC
 // ------------------------------------------------
 #define BACKGROUND_WORKER_CLOSE(cName, bgName) \
 public:                                        \
-    void bgName##_Close(void)                  \
+    void bgName##Close(void)                   \
     {                                          \
         pthread_cancel(this->bgName##_id);     \
     }
 
-#define BACKGROUND_WORKER_START(cName, bgName)                            \
-public:                                                                   \
-    void bgName##_Start(void)                                             \
-    {                                                                     \
-        pthread_create(&bgName##_id, NULL, &cName::bgName##_sLink, this); \
+#define BACKGROUND_WORKER_START(cName, bgName)                           \
+public:                                                                  \
+    void bgName##Start(void)                                             \
+    {                                                                    \
+        pthread_create(&bgName##_id, NULL, &cName::bgName##SLink, this); \
     }
 
 #define BACKGROUND_WORKER_DOWORK(cName, bgName)        \
@@ -50,13 +50,13 @@ private:                                               \
     pthread_t bgName##_id;                             \
                                                        \
 private:                                               \
-    static void *bgName##_sLink(void *iContext)        \
+    static void *bgName##SLink(void *i_context)        \
     {                                                  \
-        return ((cName *)iContext)->bgName##_DoWork(); \
+        return ((cName *)i_context)->bgName##DoWork(); \
     }                                                  \
                                                        \
 private:                                               \
-    void *bgName##_DoWork(void)
+    void *bgName##DoWork(void)
 
 #define BACKGROUND_WORKER(ClassName, ThreadName)   \
     BACKGROUND_WORKER_START(ClassName, ThreadName) \
