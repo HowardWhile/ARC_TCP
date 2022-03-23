@@ -1,16 +1,16 @@
 #ifndef TCP_CLIENT_H
 #define TCP_CLIENT_H
 
-#include "TCP_Base.hpp"
+#include "tcp_base.hpp"
 
 #pragma once
 namespace ARC
 {
-    class TCP_Client
+    class TCPClient
     {
     public:
-        TCP_Client(std::string iIP, int iPort);
-        ~TCP_Client();
+        TCPClient(std::string iIP, int iPort);
+        ~TCPClient();
 
         bool Connect(int timeout = -1);
         bool isConnected();
@@ -22,14 +22,14 @@ namespace ARC
         // ----------------------------------------
         // Event
         // ----------------------------------------
-        void (*Event_Connected)(TCP_Client *context);
-        void (*Event_Disconnected)(TCP_Client *context, int ErrCode);
-        void (*Event_DataReceive)(TCP_Client *context, pkg Package);
+        void (*Event_Connected)(TCPClient *context);
+        void (*Event_Disconnected)(TCPClient *context, int ErrCode);
+        void (*Event_DataReceive)(TCPClient *context, pkg Package);
 
         // ----------------------------------------
         // Thread
         // ----------------------------------------
-        BACKGROUND_WORKER(TCP_Client, bgRx)
+        BACKGROUND_WORKER(TCPClient, bgRx)
         {
             this->bgRxWork();
         }

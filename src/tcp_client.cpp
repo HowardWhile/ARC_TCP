@@ -1,4 +1,4 @@
-#include "TCP_Client.h"
+#include "tcp_client.h"
 
 #include <sys/socket.h>
 #include <netinet/in.h> // sockaddr_in
@@ -16,7 +16,7 @@
 
 namespace ARC
 {
-    TCP_Client::TCP_Client(std::string iIP, int iPort)
+    TCPClient::TCPClient(std::string iIP, int iPort)
     {
         this->_socket_id = -1;
         this->Event_Connected = nullptr;
@@ -27,11 +27,11 @@ namespace ARC
         this->_port = iPort;
     }
 
-    TCP_Client::~TCP_Client()
+    TCPClient::~TCPClient()
     {
     }
 
-    bool TCP_Client::Connect(int timeout)
+    bool TCPClient::Connect(int timeout)
     {
         // 初始化取得Socket ID
         if (this->_socket_id == -1)
@@ -150,7 +150,7 @@ namespace ARC
         }
     }
 
-    bool TCP_Client::isConnected()
+    bool TCPClient::isConnected()
     {
         if (this->_socket_id < 0)
         {
@@ -166,13 +166,13 @@ namespace ARC
         return true;
     }
 
-    void TCP_Client::disconnect()
+    void TCPClient::disconnect()
     {
         close(this->_socket_id);
         this->bgRxClose();
     }
 
-    int TCP_Client::write(ARC::pkg i_package)
+    int TCPClient::write(ARC::pkg i_package)
     {
         if (i_package.size() > 0 && this->isConnected())
         {
@@ -180,7 +180,7 @@ namespace ARC
         }
     }
 
-    int TCP_Client::write(std::string i_message)
+    int TCPClient::write(std::string i_message)
     {
         if (i_message.length() > 0 && this->isConnected())
         {
@@ -189,7 +189,7 @@ namespace ARC
         }
     }
 
-    int TCP_Client::write(const char i_byte[], int i_length)
+    int TCPClient::write(const char i_byte[], int i_length)
     {
         if (i_length > 0 && this->isConnected())
         {
@@ -202,7 +202,7 @@ namespace ARC
         }
     }
 
-    void ARC::TCP_Client::bgRxWork(void)
+    void ARC::TCPClient::bgRxWork(void)
     {
         // char rx_buffer[2048] 用於緩衝
         std::vector<char> rx_buffer;

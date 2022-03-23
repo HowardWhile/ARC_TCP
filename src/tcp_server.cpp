@@ -1,4 +1,4 @@
-#include "TCPServer.h"
+#include "tcp_server.h"
 #include <sys/socket.h>
 #include <arpa/inet.h> /*inet_ntoa*/
 #include <string.h>    // bzero
