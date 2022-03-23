@@ -19,17 +19,19 @@
 #include <string>
 #include <thread>
 
+#define ARC_TCP_RX_BUFFER_SIZE 2048
 namespace ARC
 {
     typedef std::vector<char> pkg;
     typedef std::vector<pkg> pkgs;
 
-    typedef struct{
-        std::string endpoint;
-        std::string ip;
-        int port;
-        int socket_id;
-    }AcceptInfo;
+    typedef struct
+    {
+        std::string endpoint; // ex: 192.168.1.1:50000 我用該字串這個作為連入列表的key
+        std::string ip;       // ex: 192.168.1.1
+        int port;             // ex: 50000
+        int socket_id;        //
+    } AcceptInfo;
 }
 
 // ------------------------------------------------

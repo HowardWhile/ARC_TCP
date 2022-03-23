@@ -206,7 +206,7 @@ namespace ARC
     {
         // char rx_buffer[2048] 用於緩衝
         std::vector<char> rx_buffer;
-        rx_buffer.resize(2048); //
+        rx_buffer.resize(ARC_TCP_RX_BUFFER_SIZE); //
 
         int byte2read = 0;
 

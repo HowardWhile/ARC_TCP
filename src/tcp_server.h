@@ -4,7 +4,7 @@
 #pragma once
 
 /**
-    @file TCPServer
+    @file tcp_server
 
     @brief TCP Server的API
 
@@ -20,44 +20,51 @@
 #include <mutex>
 namespace ARC
 {
-    class AcceptClient // 每個連入訊息
-    {
-    private:
-    public:
-        AcceptClient(AcceptInfo i_accept_info, void* i_context);
-        ~AcceptClient();
-
-    private:
-        AcceptInfo accept_info;
-        // ----------------------------------------
-        // Thread for processing incoming messages.
-        // ----------------------------------------
-        BACKGROUND_WORKER(AcceptClient, bgRx)
-        {
-            this->bgRxWork();
-        }
-        void bgRxWork(void);
-    };
-
     class TCPServer
     {
     public:
         TCPServer(int i_port);
         ~TCPServer();
-
-        int open();   // 啟動server
-        void close(); // 關閉server
-
         // ----------------------------------------
-        // 連入的table與操作時會用到的執行序安全變數
-        std::map<std::string, AcceptClient> table_accept_client;
-        std::mutex* mutex_accept_client;
+        int start();                   // 啟動server
+        void shutDown();               // 關閉server
+        int write(ARC::pkg i_package); // 廣播寫入
+        int write(std::string i_message);
+        int write(const char i_byte[], int i_length, std::string i_endpoint = "");
         // ----------------------------------------
+        // Event
+        // ----------------------------------------
+        void (*Event_Accepted)(TCPServer *context, AcceptInfo *i_client_info);
+        void (*Event_Disconnected)(TCPServer *context, AcceptInfo *i_client_info, int i_error_code);
+        void (*Event_DataReceive)(TCPServer *context, AcceptInfo *i_client_info, pkg package);
+        // ----------------------------------------
+        class AcceptClient // 連入訊息的執行個體
+        {
+        private:
+        public:
+            AcceptClient(AcceptInfo i_accept_info, TCPServer *i_parent);
+            ~AcceptClient();
+
+        private:
+            AcceptInfo _accept_info;
+            TCPServer *_parent; // 可由此查找這個連入訊息的執行個體是由哪個TCPServer建立的
+            // ----------------------------------------
+            // Thread for processing incoming messages.
+            // ----------------------------------------
+            BACKGROUND_WORKER(AcceptClient, bgRx)
+            {
+                this->bgRxWork();
+            }
+            void bgRxWork(void);
+        };
 
     private:
         int _socket_id;
-        int _port;        
-
+        int _port;
+        // ----------------------------------------
+        // 連入的table與操作時會用到的執行序安全變數
+        std::map<std::string, AcceptClient *> table_accept_client;
+        std::mutex *mutex_accept_client;
         // ----------------------------------------
         // Thread used to handle clinet connect
         // ----------------------------------------
@@ -68,7 +75,7 @@ namespace ARC
         void bgListenWork(void);
         // ----------------------------------------
     };
-    
+
 }
 
 #endif

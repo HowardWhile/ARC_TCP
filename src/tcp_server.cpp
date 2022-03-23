@@ -21,6 +21,10 @@ namespace ARC
         this->_port = i_port;
 
         this->mutex_accept_client = new std::mutex();
+
+        this->Event_Accepted = nullptr;
+        this->Event_DataReceive = nullptr;
+        this->Event_Disconnected = nullptr;
     }
 
     TCPServer::~TCPServer()
@@ -28,11 +32,11 @@ namespace ARC
         delete this->mutex_accept_client;
     }
 
-    int TCPServer::open()
+    int TCPServer::start()
     {
         // ----------------------------------------------------
         // 如果開啟過先關閉
-        this->close();
+        this->shutDown();
         // ----------------------------------------------------
         // initial socket
         this->_socket_id = socket(AF_INET, SOCK_STREAM, 0);
@@ -89,13 +93,13 @@ namespace ARC
         // ----------------------------------------------------
     }
 
-    void TCPServer::close()
+    void TCPServer::shutDown()
     {
     }
 
     void TCPServer::bgListenWork(void)
     {
-        DBG_PRINT("bgListenWork thread start! socket ID:(%d)", this->_socket_id);
+        DBG_PRINT("bgListenWork thread start! socket ID:(%d) thread ID (0x%X)", this->_socket_id, (unsigned)this->bgListen_id);
         while (true)
         {
             // 等待連入的訊息
@@ -123,49 +127,76 @@ namespace ARC
                 DBG_PRINT("++ accept from [%s]", info.endpoint.c_str());
                 // -----------------------------------------
                 {
+                    // lock起後建立AcceptClient的執行任務
                     std::lock_guard<std::mutex> lock(*this->mutex_accept_client); // lock table_accept_client
-                    this->table_accept_client.insert({info.endpoint, AcceptClient(info, this)});
+                    this->table_accept_client.insert({info.endpoint, new AcceptClient(info, this)});
                 }
 
-                // try
-                // {
-                //     char endpoint_str[32];
-                //     sprintf(endpoint_str, "%s:%d", inet_ntoa(accept_info.sin_addr), htons(accept_info.sin_port));
-                //     accept_list_node *value = new accept_list_node(accept_socket_id, accept_info, pthis);
-                //     std::string key(endpoint_str);
-                //     pthread_mutex_lock(&pthis->accept_list_mutex);
-                //     //pthis->accept_list.insert({accept_info, value });
-                //     pthis->accept_list.insert(std::pair<std::string, accept_list_node *>(key, value));
-                //     pthread_mutex_unlock(&pthis->accept_list_mutex);
-
-                //     if (pthis->Event_AcceptSocket != NULL)
-                //     {
-                //         pthis->Event_AcceptSocket(key);
-                //     }
-                // }
-                // catch (std::exception ex)
-                // {
-                //     std::cout << ex.what();
-                // }
+                if (this->Event_Accepted != nullptr)
+                {
+                    this->Event_Accepted(this, &info);
+                }
             }
         }
-        DBG_PRINT("bgListenWork thread exit! socket ID:(%d)", this->_socket_id);
+        DBG_PRINT("bgListenWork thread exit! socket ID:(%d) thread ID (0x%X)", this->_socket_id, (unsigned)this->bgListen_id);
     }
 
-    AcceptClient::AcceptClient(AcceptInfo i_accept_info, void* i_context)
+    TCPServer::AcceptClient::AcceptClient(AcceptInfo i_accept_info, TCPServer *i_parent)
     {
-        this->accept_info = i_accept_info;        
+        this->_accept_info = i_accept_info;
+        this->_parent = i_parent;
         this->bgRxStart();
     }
 
-    AcceptClient::~AcceptClient()
+    TCPServer::AcceptClient::~AcceptClient()
     {
-        close(this->accept_info.socket_id);
+        close(this->_accept_info.socket_id);
         this->bgRxClose();
     }
 
-    void AcceptClient::bgRxWork(void)
+    void TCPServer::AcceptClient::bgRxWork(void)
     {
-    }
+        DBG_PRINT("bg_rx thread start! socket ID:(%d), thread ID (0x%X).\r\n", this->_accept_info.socket_id, (unsigned)this->bgRx_id);
+        // char rx_buffer[2048] 用於緩衝
+        std::vector<char> rx_buffer;
+        rx_buffer.resize(ARC_TCP_RX_BUFFER_SIZE); //
 
+        int byte2read = 0;
+
+        // main loop
+        while (true)
+        {
+            char *buffer_ptr = &rx_buffer[0];
+            int buffer_size = rx_buffer.size();
+
+            int byte2read = recv(this->_accept_info.socket_id, buffer_ptr, buffer_size, 0); // recv函數會block住直到有情況要處理
+            DBG_PRINT("byte2read = %d", byte2read);
+
+            if (byte2read < 0) // 有通訊錯誤發生
+            {
+                DBG_PRINT("[Socket ID:(%d)] recv function error: (%d), close rx thread.", this->_accept_info.socket_id, byte2read);
+                break;
+            }
+            else if (byte2read == 0) // 斷線發生
+            {
+                DBG_PRINT("[Socket ID:(%d)] Detected TcpServer offline, close rx thread.", this->_accept_info.socket_id);
+                break;
+            }
+            else
+            {
+                pkg package;
+                package.assign(rx_buffer.begin(), rx_buffer.begin() + byte2read);
+
+                //if (this->Event_DataReceive != nullptr)
+                //{
+                //    this->Event_DataReceive(this, package);
+                //}
+            }
+        }
+
+        //if (this->Event_Disconnected != nullptr)
+        //{
+        //    this->Event_Disconnected(this, byte2read);
+        //}
+    }
 }

@@ -4,6 +4,19 @@
 #include "tcp_base.hpp"
 
 #pragma once
+
+/**
+    @file tcp_client
+
+    @brief TCPClient的API
+
+    @author Howard Cheng
+
+    @Contact makubex49@hotmail.com
+
+    @date 2022-03-23
+*/
+
 namespace ARC
 {
     class TCPClient
