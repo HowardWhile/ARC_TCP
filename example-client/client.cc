@@ -10,7 +10,7 @@ using namespace ARC;
 void Connected(TCP_Client* Context);
 void Disconnected(TCP_Client* Context, int ErrCode);
 void DataReceive(TCP_Client* Context, pkg Package);
-TCP_Client client = TCP_Client("127.0.0.1", 2000);
+TCP_Client client = TCP_Client("192.168.43.2", 2000);
 
 int main(void)
 {    
@@ -26,7 +26,7 @@ int main(void)
     }    
     
     printf("Press Enter key to disconnect...");  fgetc(stdin); 
-    client.Disconnect();
+    client.disconnect();
 
     PAUSE;
     return 0;
@@ -44,6 +44,10 @@ void Disconnected(TCP_Client* Context, int ErrCode)
 
 void DataReceive(TCP_Client* Context, pkg Package)
 {
+    TCP_Client* c = Context;
+    c->write(Package); // echo
+
     std::string msg(Package.begin(), Package.end());
-    printf("DataReceive: %s\r\n",msg.c_str());
+    printf("DataReceive: [%s]\r\n",msg.c_str());
+    
 }

@@ -13,7 +13,11 @@ namespace ARC
         ~TCP_Client();
 
         bool Connect(int timeout = -1);
-        void Disconnect();
+        bool isConnected();
+        void disconnect();
+        int write(ARC::pkg i_package);
+        int write(std::string i_message);
+        int write(const char i_byte[], int i_length);
 
         // ----------------------------------------
         // Event
