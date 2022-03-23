@@ -1,37 +1,53 @@
 #include "TCP_Client.h"
 #include <iostream>
-#include <vector>
-#include <thread>
-#include <mutex>
+#include <stdio.h>
+#include <unistd.h>
 
-std::vector<int> buffer;
-std::mutex bufferLock;
-void bg_fun()
-{
-    int i;
-    // while (true)
-    while (i < 10)
-    {
-        std::lock_guard<std::mutex> lock(bufferLock);
-        {
-            buffer.push_back(i);
-        }
-        std::cout << "bg_fun" << i << "\r\n";
-        i++;
-    }
-}
+#define PAUSE printf("Press Enter key to continue...");  fgetc(stdin); 
+
+using namespace ARC;
+
+void Connected(TCP_Client* Context);
+void Disconnected(TCP_Client* Context, int ErrCode);
+void DataReceive(TCP_Client* Context, pkg Package);
+TCP_Client client = TCP_Client("192.168.43.2", 2000);
 
 int main(void)
-{
-    TCP_Client c;
+{    
+    printf("Press Enter key to initial tcp client...");  fgetc(stdin); 
+    client.Event_Connected = Connected;
+    client.Event_DataReceive = DataReceive;
+    client.Event_Disconnected = Disconnected;
 
-    std::thread t1(bg_fun);
-    std::thread t2(bg_fun);
-    std::thread t3(bg_fun);
-    t1.join();
-    t2.join();
-    t3.join();
+    printf("Press Enter key to connect to target...");  fgetc(stdin); 
+    if(client.Connect())
+    {
 
-    std::cout << "complete\r\n";
+    }    
+    
+    printf("Press Enter key to disconnect...");  fgetc(stdin); 
+    client.disconnect();
+
+    PAUSE;
     return 0;
+}
+
+void Connected(TCP_Client* Context)
+{
+    printf("Connected\r\n");
+}
+
+void Disconnected(TCP_Client* Context, int ErrCode)
+{
+    printf("Disconnected\r\n"); 
+}
+
+void DataReceive(TCP_Client* Context, pkg Package)
+{
+    TCP_Client* c = Context;
+    c->write(Package); // echo
+
+    std::string msg(Package.begin(), Package.end());
+    printf("DataReceive: [%s]\r\n",msg.c_str());
+    
 }
