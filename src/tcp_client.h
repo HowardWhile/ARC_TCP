@@ -1,16 +1,29 @@
 #ifndef TCP_CLIENT_H
 #define TCP_CLIENT_H
 
-#include "TCP_Base.hpp"
+#include "tcp_base.hpp"
 
 #pragma once
+
+/**
+    @file tcp_client
+
+    @brief TCPClient的API
+
+    @author Howard Cheng
+
+    @Contact makubex49@hotmail.com
+
+    @date 2022-03-23
+*/
+
 namespace ARC
 {
-    class TCP_Client
+    class TCPClient
     {
     public:
-        TCP_Client(std::string iIP, int iPort);
-        ~TCP_Client();
+        TCPClient(std::string iIP, int iPort);
+        ~TCPClient();
 
         bool Connect(int timeout = -1);
         bool isConnected();
@@ -22,24 +35,23 @@ namespace ARC
         // ----------------------------------------
         // Event
         // ----------------------------------------
-        void (*Event_Connected)(TCP_Client *context);
-        void (*Event_Disconnected)(TCP_Client *context, int ErrCode);
-        void (*Event_DataReceive)(TCP_Client *context, pkg Package);
+        void (*Event_Connected)(TCPClient *context);
+        void (*Event_Disconnected)(TCPClient *context, int ErrCode);
+        void (*Event_DataReceive)(TCPClient *context, pkg Package);
 
         // ----------------------------------------
         // Thread
         // ----------------------------------------
-        BACKGROUND_WORKER(TCP_Client, bgRx)
+        BACKGROUND_WORKER(TCPClient, bgRx)
         {
             this->bgRxWork();
         }
 
     private:
-        void init();
         void bgRxWork(void);
-        int socket_id;
-        std::string ip_address;
-        int port;
+        int _socket_id;
+        std::string _ip_address;
+        int _port;
     };
 
 }
