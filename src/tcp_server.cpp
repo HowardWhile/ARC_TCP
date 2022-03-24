@@ -7,11 +7,11 @@
 
 #define MAX_ACCEPT_NUM 2 // 最大的連接數量
 
-// #define DBG_PRINT(...) // disable debug print
+ #define DBG_PRINT(...) // disable debug print
 // #define DBG_PRINT(...) printf(__VA_ARGS__) // depend on stdio.h
 
-#include "arc_console.hpp"
-#define DBG_PRINT(...) console_tag("TCPServer", __VA_ARGS__) // depend on arc_console.hpp
+//#include "arc_console.hpp"
+//#define DBG_PRINT(...) console_tag("TCPServer", __VA_ARGS__) // depend on arc_console.hpp
 
 namespace ARC
 {
@@ -96,6 +96,19 @@ namespace ARC
 
     void TCPServer::shutDown()
     {
+        // 關閉listen執行序
+        this->bgListenClose();
+        close(this->_socket_id);
+
+        // 釋放rx的執行序
+        std::lock_guard<std::mutex> lock(*this->mutex_accept_client);
+        {
+            // for loop table
+            for (auto const &client : this->table_accept_client)
+            {
+                client.second->disconnect();
+            }
+        }
     }
 
     int TCPServer::write(ARC::pkg i_package, std::string i_endpoint)
@@ -262,5 +275,11 @@ namespace ARC
             return false;
         }
         return true;
+    }
+
+    void TCPServer::AcceptClient::disconnect() 
+    {
+        close(this->_accept_info.socket_id);
+        this->bgRxClose();
     }
 }

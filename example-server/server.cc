@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#define PAUSE                                 \
-    printf("Press Enter key to continue..."); \
+#define PAUSE                                     \
+    printf("Press Enter key to continue...\r\n"); \
     fgetc(stdin);
 
 using namespace ARC;
@@ -19,9 +19,13 @@ int main(void)
     ss.Event_Accepted = Accepted;
     ss.Event_DataReceive = DataReceive;
     ss.Event_Disconnected = Disconnected;
-
     ss.start();
-    PAUSE;
+
+    printf("TCP server start (echo mode) press Enter key to shutdown...\r\n");
+    fgetc(stdin);
+    ss.shutDown();
+
+    PAUSE
     return 0;
 }
 
@@ -32,7 +36,7 @@ void Accepted(TCPServer *context, AcceptInfo *i_client_info)
 
 void Disconnected(TCPServer *context, AcceptInfo *i_client_info, int i_error_code)
 {
-    printf("[Disconnected][%s]\r\n", i_client_info->endpoint.c_str());
+    printf("[Disconnected][%s] error_code: %d\r\n", i_client_info->endpoint.c_str(), i_error_code);
 }
 
 void DataReceive(TCPServer *context, AcceptInfo *i_client_info, pkg i_package)
@@ -42,8 +46,8 @@ void DataReceive(TCPServer *context, AcceptInfo *i_client_info, pkg i_package)
     printf("[DataReceive]<%d>[%s]\r\n", (int)i_package.size(), msg.c_str());
 
     // echo
-    //context->write(i_package, i_client_info->endpoint);
+    context->write(i_package, i_client_info->endpoint);
 
     // echo broadcast
-    context->write(i_package);
+    //context->write(i_package);
 }

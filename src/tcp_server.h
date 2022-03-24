@@ -48,6 +48,7 @@ namespace ARC
             ~AcceptClient();
             int write(const char i_byte[], int i_length);
             bool isConnect();
+            void disconnect();
 
         private:
             AcceptInfo _accept_info;
