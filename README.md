@@ -3,6 +3,8 @@ Simple tcp library for Ubuntu/Debain
 
 ## Demo
 
+tool software `sokit` is download from `https://github.com/sinpolib/sokit/releases`
+
 ### Server 
 
 ``` shell
@@ -13,9 +15,17 @@ make
 
 ![image-20220324103100262](pic/README/image-20220324103100262.png)
 
-tool software `sokit` is download from `https://github.com/sinpolib/sokit/releases`
 
 
+### Client
+
+```shell
+cd example-client/
+make
+./client.out
+```
+
+![image-20220324110424571](pic/README/image-20220324110424571.png)
 
 
 

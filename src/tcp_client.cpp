@@ -8,11 +8,11 @@
 #include <unistd.h>     // close()
 #include <signal.h>     // pthread_kill()
 
-// #define DBG_PRINT(...) // disable debug print
+#define DBG_PRINT(...) // disable debug print
 // #define DBG_PRINT(...) printf(__VA_ARGS__) // depend on stdio.h
 
 #include "arc_console.hpp"
-#define DBG_PRINT(...) console_tag("TCPClient", __VA_ARGS__) // depend on arc_console.hpp
+//#define DBG_PRINT(...) console_tag("TCPClient", __VA_ARGS__) // depend on arc_console.hpp
 
 namespace ARC
 {

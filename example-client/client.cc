@@ -1,53 +1,59 @@
-#include "TCP_Client.h"
+#include "tcp_client.h"
 #include <iostream>
 #include <stdio.h>
 #include <unistd.h>
 
-#define PAUSE printf("Press Enter key to continue...");  fgetc(stdin); 
+#define PAUSE                                     \
+    printf("Press Enter key to continue...\r\n"); \
+    fgetc(stdin);
 
 using namespace ARC;
 
-void Connected(TCP_Client* Context);
-void Disconnected(TCP_Client* Context, int ErrCode);
-void DataReceive(TCP_Client* Context, pkg Package);
-TCP_Client client = TCP_Client("192.168.43.2", 2000);
+void Connected(TCPClient *context);
+void Disconnected(TCPClient *context, int i_error_code);
+void DataReceive(TCPClient *context, pkg i_package);
+
+TCPClient client = TCPClient("127.0.0.1", 2000);
+//CPClient client = TCPClient("github.com", 80);
 
 int main(void)
-{    
-    printf("Press Enter key to initial tcp client...");  fgetc(stdin); 
+{
     client.Event_Connected = Connected;
     client.Event_DataReceive = DataReceive;
     client.Event_Disconnected = Disconnected;
 
-    printf("Press Enter key to connect to target...");  fgetc(stdin); 
-    if(client.Connect())
+    printf("Press Enter key to connect to target...\r\n");
+    fgetc(stdin);
+    bool ret = client.Connect();
+    if (ret)
     {
-
-    }    
-    
-    printf("Press Enter key to disconnect...");  fgetc(stdin); 
-    client.disconnect();
+        printf("Press Enter key to disconnect...\r\n");
+        fgetc(stdin);
+        client.disconnect();
+    }
+    else
+    {
+        printf("Connect fail\r\n");
+    }
 
     PAUSE;
     return 0;
 }
 
-void Connected(TCP_Client* Context)
+void Connected(TCPClient *context)
 {
-    printf("Connected\r\n");
+    printf("[Connected]\r\n");
 }
 
-void Disconnected(TCP_Client* Context, int ErrCode)
+void Disconnected(TCPClient *context, int i_error_code)
 {
-    printf("Disconnected\r\n"); 
+    printf("[Disconnected] error_code: %d\r\n", i_error_code);
 }
 
-void DataReceive(TCP_Client* Context, pkg Package)
+void DataReceive(TCPClient *context, pkg i_package)
 {
-    TCP_Client* c = Context;
-    c->write(Package); // echo
-
-    std::string msg(Package.begin(), Package.end());
-    printf("DataReceive: [%s]\r\n",msg.c_str());
-    
+    TCPClient *c = context;
+    c->write(i_package); // echo
+    std::string msg(i_package.begin(), i_package.end());
+    printf("[DataReceive]<%d>[%s]\r\n", (int)i_package.size(), msg.c_str());
 }

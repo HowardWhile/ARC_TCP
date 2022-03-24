@@ -36,8 +36,8 @@ namespace ARC
         // Event
         // ----------------------------------------
         void (*Event_Connected)(TCPClient *context);
-        void (*Event_Disconnected)(TCPClient *context, int ErrCode);
-        void (*Event_DataReceive)(TCPClient *context, pkg Package);
+        void (*Event_Disconnected)(TCPClient *context, int i_error_code);
+        void (*Event_DataReceive)(TCPClient *context, pkg i_package);
 
         // ----------------------------------------
         // Thread
